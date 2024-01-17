@@ -89,7 +89,7 @@ class MiniTestViewSet(viewsets.ModelViewSet):
         try:
             serializer.is_valid(raise_exception=True)
         except serializers.ValidationError as e:
-            print(e.detail) 
+            return Response({"error": e.detail}, status=status.HTTP_400_BAD_REQUEST)
         self.perform_create(serializer)
         headers = self.get_success_headers(serializer.data)
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
