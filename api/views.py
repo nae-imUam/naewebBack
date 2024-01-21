@@ -96,8 +96,8 @@ class MiniTestViewSet(viewsets.ModelViewSet):
 
 
 
-@api_view(['GET'])
+'''@api_view(['GET'])
 def get_minitest_by_test_number(request, test_number):
     minitest = get_object_or_404(MiniTest, test_number=test_number)
     serializer = MiniTestSerializer(minitest)
-    return Response(serializer.data)
+    return Response(serializer.data)'''
