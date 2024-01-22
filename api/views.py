@@ -7,11 +7,12 @@ from rest_framework import viewsets, serializers, status
 from django.contrib.auth.tokens import default_token_generator
 from rest_framework.response import Response
 from .models import UserProfile, UserData, MiniTest
-from .serializers import MiniTestSerializer
+from .serializers import MiniTestSerializer, MiniTestInfoSerializer, QuizDataUpdateSerializer, UserDataRetrieveSerializer
 from django.views.decorators.http import require_GET
 from django.shortcuts import get_object_or_404
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
+from rest_framework.views import APIView
 
 
 
@@ -100,4 +101,117 @@ class MiniTestViewSet(viewsets.ModelViewSet):
 def get_minitest_by_test_number(request, test_number):
     minitest = get_object_or_404(MiniTest, test_number=test_number)
     serializer = MiniTestSerializer(minitest)
+<<<<<<< HEAD
     return Response(serializer.data)'''
+=======
+    return Response(serializer.data)
+
+
+class MiniTestInfoListView(APIView):
+    def get(self, request, class_name, subject):
+        mini_tests = MiniTest.objects.filter(class_name=class_name, subject=subject)
+        serializer = MiniTestInfoSerializer(mini_tests, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    
+    
+
+class QuizDataUpdateView(APIView):
+    def post(self, request, *args, **kwargs):
+        username = kwargs.get('username')
+        serializer = QuizDataUpdateSerializer(data=request.data)
+
+        if serializer.is_valid():
+            minitest_id = serializer.validated_data['minitest_id']
+            attempt = serializer.validated_data['attempt']
+            status = serializer.validated_data['status']
+            percentage = serializer.validated_data['percentage']
+
+            try:
+                user_data = UserData.objects.get(username=username)
+            except UserData.DoesNotExist:
+                return Response({"error": "User data not found"}, status=status.HTTP_404_NOT_FOUND)
+
+            quiz_data = user_data.quiz_data
+
+            for item in quiz_data:
+                if item['minitest_id'] == minitest_id:
+                    current_attempt = int(item['result']['Attempt'])
+                    new_attempt = current_attempt + 1
+                    item['result']['Attempt'] = str(new_attempt)
+                    item['result']['status'] = status
+                    item['result']['percentage'] = percentage
+                    break
+            else:
+                quiz_data.append({
+                    'minitest_id': minitest_id,
+                    'result': {
+                        'Attempt': '1',  # Set to 1 for the first attempt
+                        'status': status,
+                        'percentage': percentage,
+                    }
+                })
+
+            user_data.quiz_data = quiz_data
+            user_data.save()
+
+            return Response({"success": "Quiz data updated successfully"}, status=status.HTTP_200_OK)
+        else:
+            return Response({"error": "Invalid data", "details": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+
+    def post(self, request, *args, **kwargs):
+        username = kwargs.get('username')
+        serializer = QuizDataUpdateSerializer(data=request.data)
+
+        if serializer.is_valid():
+            minitest_id = serializer.validated_data['minitest_id']
+            attempt = serializer.validated_data['attempt']
+            status = serializer.validated_data['status']
+            percentage = serializer.validated_data['percentage']
+
+            try:
+                user_data = UserData.objects.get(username=username)
+            except UserData.DoesNotExist:
+                return Response({"error": "User data not found"}, status=status.HTTP_404_NOT_FOUND)
+
+            quiz_data = user_data.quiz_data
+
+            for item in quiz_data:
+                if item['minitest_id'] == minitest_id:
+                    current_attempt = int(item['result']['Attempt'])
+                    new_attempt = current_attempt + 1
+                    item['result']['Attempt'] = new_attempt
+                    item['result']['status'] = status
+                    item['result']['percentage'] = percentage
+                    break
+            else:
+                quiz_data.append({
+                    'minitest_id': minitest_id,
+                    'result': {
+                        'Attempt': '1',
+                        'status': status,
+                        'percentage': percentage,
+                    }
+                })
+
+            user_data.quiz_data = quiz_data
+            user_data.save()
+
+            return Response({"success": "Quiz data updated successfully"}, status=200)
+        else:
+            return Response({"error": "Invalid data", "details": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+
+
+
+class QuizDataRetrieveView(APIView):
+    def get(self, request, *args, **kwargs):
+        username = kwargs.get('username')
+
+        try:
+            user_data = UserData.objects.get(username=username)
+        except UserData.DoesNotExist:
+            return Response({"error": "User data not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = UserDataRetrieveSerializer(user_data)
+
+        return Response(serializer.data, status=status.HTTP_200_OK)
+>>>>>>> addquizdatatouser
